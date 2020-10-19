@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<nav>
+    {{ request.user.username }}
+    {% if request.user.is_staff %}
+    <span> You are staff!</span>
+    {% else %}
+    <span> You are not staff!</span>
+    {% endif %}
+</nav>
+<h1> All Bulletins: </h1>
+    {%  for bulletin in bulletins %}
+    <p> {{ bulletin.body }}</p>
+    {% endfor %}
+</body>
+</html>
