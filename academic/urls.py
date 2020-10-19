@@ -29,6 +29,7 @@ urlpatterns = [
     path('register/', views.register),
     path('index/', views.index),
     path('messages/', views.message_list),
+    path('write_message/', views.write_message),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

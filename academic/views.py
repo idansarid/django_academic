@@ -2,7 +2,8 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from academic.models import Bulletin
+from academic.models import Bulletin, User, Message
+from datetime import datetime
 
 
 @login_required(login_url="/login")
@@ -67,7 +68,7 @@ def dashboard(request):
     return render(request, 'admindash.html')
 
 
-from academic.models import Message
+from academic.models import Message, User
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -86,6 +87,31 @@ def message_list(request):
 
     elif request.method == 'POST':
         serializer = MessageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def write_message(request):
+    """
+    List all code snippets, or create a new snippet.
+    """
+    users = User.objects.all()
+    if request.method == 'GET':
+        messages = Message.objects.all()
+        serializer = MessageSerializer(messages, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = MessageSerializer(data=request.data)
+        message = Message()
+        message.creation_date = datetime.now
+        message.sender = serializer.initial_data['sender']
+        message.receiver = serializer.initial_data['receiver']
+        message.message = serializer.initial_data['message']
+        message.subject = serializer.initial_data['subject']
+        message.save()
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
