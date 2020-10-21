@@ -146,24 +146,15 @@ def read_message(request):
     """
     List all code snippets, or create a new snippet.
     """
+    expected_user = request.data['user']
     users = User.objects.all()
-    if request.method == 'GET':
-        messages = Message.objects.all()
-        serializer = MessageSerializer(messages, many=True)
-        return Response(serializer.data)
-    elif request.method == 'POST':
-        serializer = Message1Serializer(data=request.data)
-        message = Message1()
-        message.creation_date = datetime.now
-        message.sender = serializer.initial_data['sender']
-        message.receiver = serializer.initial_data['receiver']
-        message.message = serializer.initial_data['message']
-        message.subject = serializer.initial_data['subject']
-        message.save()
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if request.method == 'POST':
+        for user in users:
+            if expected_user == user.get_username():
+                messages = Message1.objects.filter(receiver=user.get_username())
+                serializer = Message1Serializer(messages, many=True)
+                return Response(serializer.data)
+        return HttpResponse("No data for user {}".format(request.data))
 
 
 @api_view(['GET', 'POST'])

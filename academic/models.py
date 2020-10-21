@@ -37,6 +37,7 @@ class Message1(models.Model):
     message = models.TextField()
     subject = models.TextField()
     creation_date = models.DateTimeField(auto_now_add=True)
+    read_by_receiver = models.BooleanField(default=False)
 
 
 @receiver(post_save, sender=User)
