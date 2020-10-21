@@ -68,12 +68,13 @@ def dashboard(request):
     return render(request, 'admindash.html')
 
 
-from academic.models import Message, Message1, User, Sender, Receiver
+from academic.models import Message, Message, User, Sender, Receiver
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from academic.serializers import MessageSerializer, UserSerializer, Message1Serializer, ListSerializer
+from academic.serializers import MessageSerializer, UserSerializer, MessageSerializer, ListSerializer
 import copy
+import uuid
 
 
 @api_view(['GET', 'POST'])
@@ -82,8 +83,8 @@ def message_list(request):
     List all code snippets, or create a new snippet.
     """
     if request.method == 'GET':
-        messages = Message1.objects.all()
-        serializer = Message1Serializer(messages, many=True)
+        messages = Message.objects.all()
+        serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
     elif request.method == 'POST':
@@ -102,11 +103,12 @@ def write_message(request):
     users = User.objects.all()
     if request.method == 'GET':
         messages = Message.objects.all()
-        serializer = Message1Serializer(messages, many=True)
+        serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
-        serializer = Message1Serializer(data=request.data)
-        message = Message1()
+        serializer = MessageSerializer(data=request.data)
+        message = Message()
+        message.id = uuid.uuid4().int
         message.creation_date = datetime.now
         message.sender = str(serializer.initial_data['sender'])
         message.receiver = str(serializer.initial_data['receiver'])
@@ -129,8 +131,8 @@ def all_messages_for_user(request):
     if request.method == 'POST':
         for user in users:
             if expected_user == user.get_username():
-                messages = Message1.objects.filter(receiver=user.get_username())
-                serializer = Message1Serializer(messages, many=True)
+                messages = Message.objects.filter(receiver=user.get_username())
+                serializer = MessageSerializer(messages, many=True)
                 return Response(serializer.data)
         return HttpResponse("No data for user {}".format(request.data))
     elif request.method == 'POST':
@@ -151,8 +153,8 @@ def read_message(request):
     if request.method == 'POST':
         for user in users:
             if expected_user == user.get_username():
-                messages = Message1.objects.filter(receiver=user.get_username())
-                serializer = Message1Serializer(messages, many=True)
+                messages = Message.objects.filter(receiver=user.get_username())
+                serializer = MessageSerializer(messages, many=True)
                 return Response(serializer.data)
         return HttpResponse("No data for user {}".format(request.data))
 

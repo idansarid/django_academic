@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import uuid
 
 
 class Bulletin(models.Model):
@@ -24,14 +25,7 @@ class Receiver(models.Model):
 
 
 class Message(models.Model):
-    sender = models.ForeignKey(Sender, on_delete=models.CASCADE)
-    receiver = models.ForeignKey(Receiver, on_delete=models.CASCADE)
-    message = models.TextField()
-    subject = models.TextField()
-    creation_date = models.DateTimeField(auto_now_add=True)
-
-
-class Message1(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, unique=True)
     sender = models.TextField()
     receiver = models.TextField()
     message = models.TextField()

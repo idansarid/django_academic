@@ -1,19 +1,12 @@
 from rest_framework import serializers
-from academic.models import Message, Sender, Message1
+from academic.models import Sender, Message
 
 
 class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = ('sender', 'receiver', 'message', 'subject', 'creation_date')
-
-
-class Message1Serializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Message1
-        fields = ('sender', 'receiver', 'message', 'subject', 'creation_date','read_by_receiver')
+        fields = ('id', 'sender', 'receiver', 'message', 'subject', 'creation_date', 'read_by_receiver')
 
 
 class ListSerializer(serializers.ModelSerializer):
