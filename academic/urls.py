@@ -32,7 +32,7 @@ urlpatterns = [
     path('write_message/', views.write_message),
     path('read_message/', views.read_message),
     path('delete_message/', views.delete_message),
-    path('messages_for_user/', views.all_messages_for_user),
+    path('all_messages_for_user/', views.all_messages_for_user),
     path('all_unread_messages_for_user/', views.get_all_unread_messages_for_user),
 ]
 

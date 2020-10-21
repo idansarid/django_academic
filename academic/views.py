@@ -82,22 +82,15 @@ def dashboard(request):
     return render(request, 'admindash.html')
 
 
-@api_view(['GET', 'POST'])
+@api_view(['GET'])
 def message_list(request):
     """
-    List all code snippets, or create a new snippet.
+    this function returns all messages from db
     """
     if request.method == 'GET':
         messages = Message.objects.all()
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = MessageSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -105,8 +98,8 @@ def write_message(request):
     """
     List all code snippets, or create a new snippet.
     """
-    if request.method == 'POST':
-        try:
+    try:
+        if request.method == 'POST':
             serializer = MessageSerializer(data=request.data)
             message = Message()
             message.id = uuid.uuid4().int
@@ -119,52 +112,64 @@ def write_message(request):
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            pass
-        finally:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        pass
+    finally:
+        return Response("Wrong body for write_message POST request",
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET', 'POST'])
+@api_view(['POST'])
 def all_messages_for_user(request):
     """
-    List all code snippets, or create a new snippet.
+    this function receives a user and returns all the messages for the user.
+    if user doesn't exist , the response will be no data for user.
     """
-    expected_user = request.data['user']
-    users = User.objects.all()
-    if request.method == 'POST':
-        for user in users:
-            if expected_user == user.get_username():
-                messages = Message.objects.filter(receiver=user.get_username())
-                serializer = MessageSerializer(messages, many=True)
-                return Response(serializer.data)
-        return HttpResponse("No data for user {}".format(request.data))
-    elif request.method == 'POST':
-        serializer = MessageSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        if request.method == 'POST':
+            expected_user = request.data['user']
+            users = User.objects.all()
+            for user in users:
+                if expected_user == user.get_username():
+                    messages_for_user = Message.objects.filter(receiver=user.get_username())
+                    serializer = MessageSerializer(messages_for_user, many=True)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response("No data for user {}".format(request.data['user']),
+                            status=status.HTTP_200_OK)
+    except Exception as e:
+        pass
+    finally:
+        return Response("unable to get all messages for user {}".format(request.data['user']),
+                        status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
 def read_message(request):
     """
-    List all code snippets, or create a new snippet.
+    read message for a given user and id
     """
-    if request.method == 'POST':
-        expected_user = request.data['user']
-        expected_id = request.data['id']
-        users = User.objects.all()
-        for user in users:
-            if expected_user == user.get_username():
-                messages = Message.objects.filter(receiver=user.get_username())
-                message_by_id = messages.get(id=expected_id)
-                message_by_id.read_by_receiver = True
-                message_by_id.save()
-                serializer = MessageSerializer(message_by_id, many=True)
-                return Response(serializer.data)
-        return HttpResponse("No data for user {}".format(request.data))
+    try:
+        if request.method == 'POST':
+            expected_user = request.data['user']
+            expected_id = request.data['id']
+            users = User.objects.all()
+            for user in users:
+                if expected_user == user.get_username():
+                    messages = Message.objects.filter(receiver=user.get_username())
+                    message_by_id = messages.get(id=expected_id)
+                    message_by_id.read_by_receiver = True
+                    message_by_id.save()
+                    serializer = MessageSerializer(message_by_id, many=True)
+                    return Response(serializer.data)
+            return HttpResponse("No data for user {}".format(request.data))
+    except Exception as e:
+        pass
+    finally:
+        return Response("unable to read message for user {} and id {}".
+                        format(request.data['user'], request.data['id']), status=status.HTTP_200_OK)
+
+
 
 
 @api_view(['POST'])
@@ -172,27 +177,39 @@ def get_all_unread_messages_for_user(request):
     """
     List all code snippets, or create a new snippet.
     """
-    if request.method == 'POST':
-        expected_user = request.data['user']
-        users = User.objects.all()
-        for user in users:
-            if expected_user == user.get_username():
-                messages = Message.objects.filter(receiver=user.get_username(), read_by_receiver=False)
-                serializer = MessageSerializer(messages, many=True)
-                return Response(serializer.data)
-        return HttpResponse("No data for user {}".format(request.data))
+    expected_user = ''
+    try:
+        if request.method == 'POST':
+            expected_user = request.data['user']
+            users = User.objects.all()
+            for user in users:
+                if expected_user == user.get_username():
+                    messages = Message.objects.filter(receiver=user.get_username(), read_by_receiver=False)
+                    serializer = MessageSerializer(messages, many=True)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+            return HttpResponse("No data for user {}".format(request.data))
+    except Exception as e:
+        pass
+    finally:
+        return HttpResponse("Unable to get all unread messages for user {}".format(expected_user),
+                            status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 
 @api_view(['POST'])
 def delete_message(request):
     """
     upon receiving user name and id from request, this function
-    deletes the message if exists
+    deletes the message for user if exists
     """
-    if request.method == 'POST':
-        try:
-            expected_user = request.data['user']
-            expected_id = request.data['id']
+    expected_user = ''
+    expected_id = ''
+    try:
+        expected_user = request.data['user']
+        expected_id = request.data['id']
+        if request.method == 'POST':
             users = User.objects.all()
             for user in users:
                 if expected_user == user.get_username():
@@ -207,7 +224,8 @@ def delete_message(request):
                 message_by_id.delete()
                 serializer = MessageSerializer(message_by_id, many=True)
                 return Response(serializer.data)
-        except Exception as e:
-            pass
-        finally:
-            return HttpResponse("Unable to delete a message with id {}".format(expected_id))
+    except Exception as e:
+        pass
+    finally:
+        return HttpResponse("Unable to delete a message with id {}".format(expected_id),
+                            status=status.HTTP_400_BAD_REQUEST)
