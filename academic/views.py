@@ -148,33 +148,35 @@ def read_message(request):
     """
     List all code snippets, or create a new snippet.
     """
-    expected_user = request.data['user']
-    users = User.objects.all()
     if request.method == 'POST':
+        expected_user = request.data['user']
+        expected_id = request.data['id']
+        users = User.objects.all()
         for user in users:
             if expected_user == user.get_username():
                 messages = Message.objects.filter(receiver=user.get_username())
-                serializer = MessageSerializer(messages, many=True)
+                message_by_id = messages.get(id=expected_id)
+                message_by_id.read_by_receiver = True
+                message_by_id.save()
+                serializer = MessageSerializer(message_by_id, many=True)
                 return Response(serializer.data)
         return HttpResponse("No data for user {}".format(request.data))
 
 
-@api_view(['GET', 'POST'])
-def get_all_unread_messages(request):
+@api_view(['POST'])
+def get_all_unread_messages_for_user(request):
     """
     List all code snippets, or create a new snippet.
     """
-    if request.method == 'GET':
-        messages = Message.objects.all()
-        serializer = MessageSerializer(messages, many=True)
-        return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = MessageSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if request.method == 'POST':
+        expected_user = request.data['user']
+        users = User.objects.all()
+        for user in users:
+            if expected_user == user.get_username():
+                messages = Message.objects.filter(receiver=user.get_username(), read_by_receiver=False)
+                serializer = MessageSerializer(messages, many=True)
+                return Response(serializer.data)
+        return HttpResponse("No data for user {}".format(request.data))
 
 
 @api_view(['GET', 'POST'])

@@ -30,7 +30,9 @@ urlpatterns = [
     path('index/', views.index),
     path('messages/', views.message_list),
     path('write_message/', views.write_message),
-    path('messages_for_user/', views.all_messages_for_user)
+    path('read_message/', views.read_message),
+    path('messages_for_user/', views.all_messages_for_user),
+    path('all_unread_messages_for_user/', views.get_all_unread_messages_for_user),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
