@@ -31,6 +31,14 @@ class Message(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
 
 
+class Message1(models.Model):
+    sender = models.TextField()
+    receiver = models.TextField()
+    message = models.TextField()
+    subject = models.TextField()
+    creation_date = models.DateTimeField(auto_now_add=True)
+
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
