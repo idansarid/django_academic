@@ -114,8 +114,6 @@ def write_message(request):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        pass
-    finally:
         return Response("Wrong body for write_message POST request",
                         status=status.HTTP_400_BAD_REQUEST)
 
@@ -128,7 +126,7 @@ def all_messages_for_user(request):
     """
     try:
         if request.method == 'POST':
-            expected_user = request.data['user']
+            expected_user = request.data['user'].rstrip('\n')
             users = User.objects.all()
             for user in users:
                 if expected_user == user.get_username():
@@ -138,10 +136,8 @@ def all_messages_for_user(request):
             return Response("No data for user {}".format(request.data['user']),
                             status=status.HTTP_200_OK)
     except Exception as e:
-        pass
-    finally:
         return Response("unable to get all messages for user {}".format(request.data['user']),
-                        status=status.HTTP_200_OK)
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -156,20 +152,15 @@ def read_message(request):
             users = User.objects.all()
             for user in users:
                 if expected_user == user.get_username():
-                    messages = Message.objects.filter(receiver=user.get_username())
-                    message_by_id = messages.get(id=expected_id)
+                    message_by_id = Message.objects.filter(receiver=user.get_username()).get(id=expected_id)
                     message_by_id.read_by_receiver = True
                     message_by_id.save()
-                    serializer = MessageSerializer(message_by_id, many=True)
-                    return Response(serializer.data)
+                    serializer = MessageSerializer(message_by_id, many=False)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
             return HttpResponse("No data for user {}".format(request.data))
     except Exception as e:
-        pass
-    finally:
         return Response("unable to read message for user {} and id {}".
-                        format(request.data['user'], request.data['id']), status=status.HTTP_200_OK)
-
-
+                        format(request.data['user'], request.data['id']), status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -189,13 +180,8 @@ def get_all_unread_messages_for_user(request):
                     return Response(serializer.data, status=status.HTTP_200_OK)
             return HttpResponse("No data for user {}".format(request.data))
     except Exception as e:
-        pass
-    finally:
         return HttpResponse("Unable to get all unread messages for user {}".format(expected_user),
                             status=status.HTTP_400_BAD_REQUEST)
-
-
-
 
 
 @api_view(['POST'])
@@ -225,7 +211,5 @@ def delete_message(request):
                 serializer = MessageSerializer(message_by_id, many=True)
                 return Response(serializer.data)
     except Exception as e:
-        pass
-    finally:
         return HttpResponse("Unable to delete a message with id {}".format(expected_id),
                             status=status.HTTP_400_BAD_REQUEST)
